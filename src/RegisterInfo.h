@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <string>
 #define REG_SIZE 32
 
 // A struct that can hold the values of all architectural registers.

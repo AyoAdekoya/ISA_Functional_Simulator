@@ -29,6 +29,7 @@ uint64_t PC;
 enum OPCODES {
     // I-type opcodes
     OP_INTIMM  = 0b0010011, // Integer ALU immediate instructions addi, slli, slti, sltiu, xori, srli, srai, ori, andi
+    OP_OFFIMM = 0b0000011, // Offset immediate instructions lb, lh, lw, ld, lbu, lhu lwu
     // ...
 };
 
