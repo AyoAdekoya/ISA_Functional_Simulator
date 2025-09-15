@@ -59,9 +59,9 @@ enum FUNCT3 {
     FUNCT3_ADD  = 0b000, // add addi, addiw, addw 
     FUNCT3_SUB = 0b000, // sub, subw
     // For immedieate instructions
-    FUNCT3_SLL = 0b001, // slli slliw, sll, sllwf
+    FUNCT3_SLL = 0b001, // slli slliw, sll, sllw
     FUNCT3_SET = 0b010, // slti, slt
-    FUNCT3_STU = 0b011, //sltiu, sltu
+    FUNCT3_STU = 0b011, // sltiu, sltu
     FUNCT3_XOR = 0b100, // xori, xor
     FUNCT3_SHIFT = 0b101, // srli, srai, srliw, sraiw, srl, sra, srlw, sraw
     FUNCT3_OR = 0b110, // ori, or
@@ -80,8 +80,9 @@ enum RI_FUNCT7 {
     FUNCT7_ADD = 0b0000000, // add, addw
     FUNCT7_SUB = 0b0100000, // sub, subw
     // for shift instructions
-    FUNCT7_SL = 0b0000000, // sll, srl, srlw, sllw, slli, srli, slliw, srliw
+    FUNCT7_SL = 0b0000000, // sll, slt, srl, srlw, sllw, slli, srli, slliw, srliw,
     FUNCT7_SA = 0b0100000, // sra, srai, sraiw, sraw
+    // for conditional 
     // for logical operations
     FUNCT7_AND = 0b0000000, // and
     FUNCT7_OR = 0b0000000, //or

@@ -82,16 +82,76 @@ Instruction simDecode(Instruction inst) {
     inst.isLegal = true; // assume legal unless proven otherwise
 
     switch (inst.opcode) {
+        // addi, slli, slti, sltiu, xori, srli, srai, ori, andi
         case OP_INTIMM:
-            if (inst.funct3 == FUNCT3_ADD) {
+            if (inst.funct3 == FUNCT3_ADD ||
+                inst.funct3 == FUNCT3_SET || 
+                inst.funct3 == FUNCT3_STU ||
+                inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL ||
+                inst.funct3 == FUNCT3_XOR ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SA) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL) ||
+                inst.funct3 == FUNCT3_OR ||
+                inst.funct3 == FUNCT3_AND) {
                 inst.doesArithLogic = true;
                 inst.writesRd = true;
                 inst.readsRs1 = true;
                 inst.readsRs2 = false;
-            } else {
+            }
+            else {
                 inst.isLegal = false;
             }
             break;
+        // lb, lh, lw, ld, lbu, lhu lwu
+        case OP_OFFIMM:
+            if (inst.funct3 == FUNCT3_BYT ||
+                inst.funct3 == FUNCT3_HLW || 
+                inst.funct3 == FUNCT3_WRD || 
+                inst.funct3 == FUNCT3_DBL || 
+                inst.funct3 == FUNCT3_BYU || 
+                inst.funct3 == FUNCT3_HWU
+            ){
+                inst.doesArithLogic = true;
+                inst.writesRd = true;
+                inst.readsRs1 = true;
+                inst.readsRs2 = false;
+            }
+            else{
+                inst.isLegal = false;
+            }
+            break;
+        // addiw slliw srliw sraiw
+        case OP_WORIMM:
+            if (inst.funct3 == FUNCT3_ADD || inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL ||
+                inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL)
+        case OP_LNKREG:
+        case OP_REGFMT:
+            if ((inst.funct3 == FUNCT3_ADD && inst.funct7 == FUNCT7_ADD) ||
+                (inst.funct3 == FUNCT3_SUB && inst.funct7 == FUNCT7_SUB) ||
+                (inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_SET && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_STU && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_XOR && inst.funct7 == FUNCT7_XOR) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SA) ||
+                (inst.funct3 == FUNCT3_OR && inst.funct7 == FUNCT7_OR) ||
+                (inst.funct3 == FUNCT3_AND && inst.funct7 == FUNCT7_AND)
+            ) {
+                inst.doesArithLogic = true;
+                inst.writesRd = true;
+                inst.readsRs1 = true;
+                inst.readsRs2 = true;
+            }
+            else {
+                inst.isLegal = false;
+            }
+            break;
+        case OP_REGWRD:
+        case OP_STRFMT:
+        case OP_STRBYT:
+        case OP_ADDIMM:
+        case OP_LDUIMM:
+        case OP_JMPLNK:
         default:
             inst.isLegal = false;
     }
