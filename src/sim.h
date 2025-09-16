@@ -73,6 +73,8 @@ enum FUNCT3 {
     FUNCT3_BGE = 0b101, // bge
     FUNCT3_BLU = 0b110, // blt
     FUNCT3_BGU = 0b111, // bgeu
+    // For jalr instruction I
+    FUNCT3_JAL = 0b000 // jalr
 };
 
 enum RI_FUNCT7 {

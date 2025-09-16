@@ -97,6 +97,8 @@ Instruction simDecode(Instruction inst) {
                 inst.writesRd = true;
                 inst.readsRs1 = true;
                 inst.readsRs2 = false;
+                inst.writesMem = false;
+                inst.readsMem = false;
             }
             else {
                 inst.isLegal = false;
@@ -115,6 +117,8 @@ Instruction simDecode(Instruction inst) {
                 inst.writesRd = true;
                 inst.readsRs1 = true;
                 inst.readsRs2 = false;
+                inst.readsMem = true;
+                inst.writesMem = false;
             }
             else{
                 inst.isLegal = false;
@@ -122,9 +126,36 @@ Instruction simDecode(Instruction inst) {
             break;
         // addiw slliw srliw sraiw
         case OP_WORIMM:
-            if (inst.funct3 == FUNCT3_ADD || inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL ||
-                inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL)
+            if (inst.funct3 == FUNCT3_ADD || 
+                (inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL))
+                {
+                    inst.doesArithLogic = true;
+                    inst.writesRd = true;
+                    inst.readsRs1 = true;
+                    inst.readsRs2 = false;
+                    inst.readsMem = false;
+                    inst.writesMem = false;  
+                }
+            else{
+                inst.isLegal = false;
+                }
+            break;
+        // Jump and Link Register Instruction jalr
         case OP_LNKREG:
+            if (inst.funct3 = FUNCT3_JAL) {
+                inst.doesArithLogic = false;
+                inst.writesRd = true;
+                inst.readsRs1 = true;
+                inst.readsRs2 = false;
+                inst.readsMem = false;
+                inst.writesMem = false;
+            }
+            else{
+                inst.isLegal = false;
+                }
+            break;
+        // Register Format Instructions add, sub, sll, slt, sltu, xor, srl, sra, or, and
         case OP_REGFMT:
             if ((inst.funct3 == FUNCT3_ADD && inst.funct7 == FUNCT7_ADD) ||
                 (inst.funct3 == FUNCT3_SUB && inst.funct7 == FUNCT7_SUB) ||
@@ -141,17 +172,97 @@ Instruction simDecode(Instruction inst) {
                 inst.writesRd = true;
                 inst.readsRs1 = true;
                 inst.readsRs2 = true;
+                inst.readsMem = false;
+                inst.writesMem = false;
             }
             else {
                 inst.isLegal = false;
             }
             break;
+        // Register Format with word instructions addw, subw, sllw, srlw, sraw
         case OP_REGWRD:
+            if ((inst.funct3 == FUNCT3_ADD &&  inst.funct7 == FUNCT7_ADD) ||
+                (inst.funct3 == FUNCT3_SUB && inst.funct7 == FUNCT7_SUB) ||
+                (inst.funct3 == FUNCT3_SLL && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SL) ||
+                (inst.funct3 == FUNCT3_SHIFT && inst.funct7 == FUNCT7_SA))
+                {
+                    inst.doesArithLogic = true;
+                    inst.writesRd = true;
+                    inst.readsRs1 = true;
+                    inst.readsRs2 = true;
+                    inst.writesMem = false;
+                    inst.readsMem = false;
+                }
+            else {
+                inst.isLegal = false;
+            }
+            break;
+        //  Store format instructions sb, sh, sw, sd
         case OP_STRFMT:
+            if (inst.funct3 == FUNCT3_BYT ||
+                inst.funct3 == FUNCT3_HLW || 
+                inst.funct3 == FUNCT3_WRD || 
+                inst.funct3 == FUNCT3_DBL)
+                {
+                    inst.doesArithLogic = false;
+                    inst.writesRd = false;
+                    inst.readsRs1 = true;
+                    inst.readsRs2 = true;
+                    inst.writesMem = true;
+                    inst.readsMem = false;
+                }
+            else {
+                inst.isLegal = false;
+            }
+            break;
+        // Store byte instructions beq, bne, blt, bge, bltu, bgeu
         case OP_STRBYT:
+            if (inst.funct3 == FUNCT3_BEQ || 
+                inst.funct3 == FUNCT3_BNE ||
+                inst.funct3 == FUNCT3_BLT ||
+                inst.funct3 == FUNCT3_BGE ||
+                inst.funct3 == FUNCT3_BLU ||
+                inst.funct3 == FUNCT3_BGU) 
+            {
+                inst.doesArithLogic = false;
+                inst.readsRs1 = true;
+                inst.readsRs2 = true;
+                inst.writesRd = false;
+                inst.writesMem = true;
+                inst.readsMem = false;
+            }
+            else {
+                inst.isLegal = false;
+            }
+            break;
+        // Add Upper Immediate Instructions auipc
         case OP_ADDIMM:
+            inst.doesArithLogic = true;
+            inst.readsRs1 = false;
+            inst.readsRs2 = false;
+            inst.writesRd = false;
+            inst.writesMem = false;
+            inst.readsMem = false;
+            break;
+        // Load Upper Immediate Instruction lui
         case OP_LDUIMM:
+            inst.doesArithLogic = false;
+            inst.readsRs1 = false;
+            inst.readsRs2 = false;
+            inst.writesRd = true;
+            inst.writesMem = false;
+            inst.readsMem = true;
+            break;
+        // Jump and Link Instruction jal
         case OP_JMPLNK:
+            inst.doesArithLogic = false;
+            inst.readsRs1 = false;
+            inst.readsRs2 = false;
+            inst.writesRd = true;
+            inst.writesMem = false;
+            inst.readsMem = true;
+            break;
         default:
             inst.isLegal = false;
     }
