@@ -575,7 +575,7 @@ static void InstDecode() {
         .readsRs2 = true,
         .readsMem = false,
         .writesMem = false,
-        .execution = executeBlu
+        .execution = executeBlt
     };
 
     decodeNon7[OP_STRBYT][FUNCT3_BGU] = {
@@ -630,12 +630,12 @@ Instruction simDecode(Instruction inst) {
 
     inst.opcode = inst.instruction & 0b1111111;
 
-    if (inst.opcode != OP_STRFMT || inst.opcode != OP_STRBYT) {
+    if (inst.opcode != OP_STRFMT && inst.opcode != OP_STRBYT) {
         inst.rd = inst.instruction >> 7 & 0b11111;
     }
 
-    if (inst.opcode != OP_ADDIMM ||
-        inst.opcode != OP_LDUIMM ||
+    if (inst.opcode != OP_ADDIMM &&
+        inst.opcode != OP_LDUIMM &&
         inst.opcode != OP_JMPLNK)
     {
         inst.funct3 = inst.instruction >> 12 & 0b111;
@@ -692,9 +692,20 @@ Instruction simDecode(Instruction inst) {
 
 // Collect reg operands for arith or addr gen
 Instruction simOperandCollection(Instruction inst, REGS regData) {
-    
-    inst.op1Val = regData.registers[inst.rs1];
 
+    if (inst.opcode != OP_ADDIMM &&
+        inst.opcode != OP_LDUIMM &&
+        inst.opcode != OP_JMPLNK) {
+        inst.op1Val = regData.registers[inst.rs1];
+    }
+
+    if (inst.opcode == OP_REGFMT ||
+        inst.opcode == OP_REGWRD ||
+        inst.opcode == OP_STRFMT || 
+        inst.opcode == OP_STRBYT) 
+    {
+        inst.op2Val = regData.registers[inst.rs2];
+    }
     return inst;
 }
 
@@ -706,10 +717,55 @@ Instruction simNextPCResolution(Instruction inst) {
     return inst;
 }
 
-// Helper function to execute the arithmetic logic for I format fields
-static Instruction simArrithLogicImm(Instruction inst) {
-    return inst;
-}
+static void executeAdd(Instruction& inst){};
+static void executeAddw(Instruction& inst){};
+static void executeAddi(Instruction& inst){};
+static void executeAddiw(Instruction& inst){};
+static void executeAnd(Instruction& inst){};
+static void executeAndi(Instruction& inst){};
+static void executeAuipc(Instruction& inst){};
+static void executeBeq(Instruction& inst){};
+static void executeBge(Instruction& inst){};
+static void executeBgeu(Instruction& inst){};
+static void executeBlt(Instruction& inst){};
+static void executeBltu(Instruction& inst){};
+static void executeBne(Instruction& inst){};
+static void executeJal(Instruction& inst){};
+static void executeJalr(Instruction& inst){};
+static void executeLb(Instruction& inst){};
+static void executeLbu(Instruction& inst){};
+static void executeLd(Instruction& inst){};
+static void executeLh(Instruction& inst){};
+static void executeLhu(Instruction& inst){};
+static void executeLui(Instruction& inst){};
+static void executeLw(Instruction& inst){};
+static void executeLwu(Instruction& inst){};
+static void executeOr(Instruction& inst){};
+static void executeOri(Instruction& inst){};
+static void executeSb(Instruction& inst){};
+static void executeSd(Instruction& inst){};
+static void executeSh(Instruction& inst){};
+static void executeSll(Instruction& inst){};
+static void executeSllw(Instruction& inst){};
+static void executeSlli(Instruction& inst){};
+static void executeSlliw(Instruction& inst){};
+static void executeSlt(Instruction& inst){};
+static void executeSlti(Instruction& inst){};
+static void executeSltiu(Instruction& inst){};
+static void executeSltu(Instruction& inst){};
+static void executeSra(Instruction& inst){};
+static void executeSraw(Instruction& inst){};
+static void executeSrai(Instruction& inst){};
+static void executeSraiw(Instruction& inst){};
+static void executeSrl(Instruction& inst){};
+static void executeSrlw(Instruction& inst){};
+static void executeSrli(Instruction& inst){};
+static void executeSrliw(Instruction& inst){};
+static void executeSub(Instruction& inst){};
+static void executeSubw(Instruction& inst){};
+static void executeSw(Instruction& inst){};
+static void executeXor(Instruction& inst){};
+static void executeXori(Instruction& inst){};
 
 // Perform arithmetic/logic operations
 Instruction simArithLogic(Instruction inst) {
@@ -735,8 +791,9 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
 Instruction simCommit(Instruction inst, REGS &regData) {
 
     // regData here is passed by reference, so changes will be reflected in original
-    regData.registers[inst.rd] = inst.arithResult;
-
+    if (inst.opcode != OP_STRFMT && inst.opcode != OP_STRBYT) {
+        regData.registers[inst.rd] = inst.arithResult;
+    }
     return inst;
 }
 
