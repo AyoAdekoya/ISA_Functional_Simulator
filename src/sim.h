@@ -147,6 +147,18 @@ struct Instruction {
     uint64_t memResult = 0;
 };
 
+struct InscDecode{
+    bool isLegal       = false;
+    bool doesArithLogic= false;
+    bool writesRd      = false;
+    bool readsRs1      = false;
+    bool readsRs2      = false;
+    bool readsMem      = false;
+    bool writesMem     = false;
+
+    void (*execution)(Instruction&) = nullptr;
+};
+
 // The following functions are the core of the simulator. Your task is to
 // complete these functions in sim.cpp. Do not modify their signatures.
 // However, feel free to declare more functions if needed.
