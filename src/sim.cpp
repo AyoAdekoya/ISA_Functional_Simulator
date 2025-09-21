@@ -628,6 +628,9 @@ Instruction simDecode(Instruction inst) {
     // Fill in the decode table ahead of time
     InstDecode();
 
+    //Boolean to keep track of the special case Immediates
+    bool special_immediate = false;
+
     inst.opcode = inst.instruction & 0b1111111;
 
     if (inst.opcode != OP_STRFMT && inst.opcode != OP_STRBYT) {
@@ -654,6 +657,14 @@ Instruction simDecode(Instruction inst) {
     {
         inst.funct7 = inst.instruction >> 25 & 0b1111111;
     }
+
+    if ((inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SLL) ||
+        (inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SHIFT) ||
+         inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SLL ||
+         inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SHIFT) {
+            special_immediate = true;
+            inst.funct7 = inst.instruction >> 26 & 0b111111;
+    }
     
 
     if (inst.instruction == 0xfeedfeed) {
@@ -666,7 +677,7 @@ Instruction simDecode(Instruction inst) {
     }
     //inst.isLegal = true; // assume legal unless proven otherwise
 
-    if (inst.opcode == OP_REGFMT || inst.opcode == OP_REGWRD) 
+    if (inst.opcode == OP_REGFMT || inst.opcode == OP_REGWRD || special_immediate) 
     {
         InscDecode decode = decode7[inst.opcode][inst.funct3][inst.funct7];
         inst.isLegal = decode.isLegal;
@@ -717,13 +728,46 @@ Instruction simNextPCResolution(Instruction inst) {
     return inst;
 }
 
-static void executeAdd(Instruction& inst){};
-static void executeAddw(Instruction& inst){};
-static void executeAddi(Instruction& inst){};
-static void executeAddiw(Instruction& inst){};
-static void executeAnd(Instruction& inst){};
-static void executeAndi(Instruction& inst){};
-static void executeAuipc(Instruction& inst){};
+static void executeAdd(Instruction& inst){
+    inst.arithResult = inst.op1Val + inst.op2Val;
+};
+static void executeAddw(Instruction& inst){
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t register2 = inst.op2Val & 0xFFFFFFFF;
+    uint64_t result = register1 + register2;
+    uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
+
+    inst.arithResult = sext_result;
+};
+static void executeAddi(Instruction& inst){
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+
+    inst.arithResult = inst.op1Val + sext_imm12;
+};
+static void executeAddiw(Instruction& inst){
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t result = register1 + imm12;
+    uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
+
+    inst.arithResult = sext_result;
+};
+static void executeAnd(Instruction& inst){
+    inst.arithResult = inst.op1Val & inst.op2Val;
+};
+static void executeAndi(Instruction& inst){
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+
+    inst.arithResult = inst.op1Val & sext_imm12;
+};
+static void executeAuipc(Instruction& inst){
+    uint64_t imm20 = (inst.instruction >> 12) & 0b11111111111111111111;
+    uint64_t upper_imm20 = imm20 << 12;
+    uint64_t sext_upper_imm20 = (upper_imm20 & 0x80000) ? (upper_imm20 | 0xFFFFFFFFFFF00000) : upper_imm20;
+    inst.arithResult = inst.PC + sext_upper_imm20;
+};
 static void executeBeq(Instruction& inst){};
 static void executeBge(Instruction& inst){};
 static void executeBgeu(Instruction& inst){};
@@ -737,42 +781,147 @@ static void executeLbu(Instruction& inst){};
 static void executeLd(Instruction& inst){};
 static void executeLh(Instruction& inst){};
 static void executeLhu(Instruction& inst){};
-static void executeLui(Instruction& inst){};
+static void executeLui(Instruction& inst){
+    uint64_t imm20 = (inst.instruction >> 12) & 0b11111111111111111111;
+    uint64_t upper_imm20 = imm20 << 12;
+    uint64_t sext_upper_imm20 = (upper_imm20 & 0x80000) ? (upper_imm20 | 0xFFFFFFFFFFF00000) : upper_imm20;
+    inst.arithResult = sext_upper_imm20;
+};
 static void executeLw(Instruction& inst){};
 static void executeLwu(Instruction& inst){};
-static void executeOr(Instruction& inst){};
-static void executeOri(Instruction& inst){};
-static void executeSb(Instruction& inst){};
-static void executeSd(Instruction& inst){};
-static void executeSh(Instruction& inst){};
-static void executeSll(Instruction& inst){};
-static void executeSllw(Instruction& inst){};
-static void executeSlli(Instruction& inst){};
-static void executeSlliw(Instruction& inst){};
-static void executeSlt(Instruction& inst){};
-static void executeSlti(Instruction& inst){};
-static void executeSltiu(Instruction& inst){};
-static void executeSltu(Instruction& inst){};
-static void executeSra(Instruction& inst){};
-static void executeSraw(Instruction& inst){};
-static void executeSrai(Instruction& inst){};
-static void executeSraiw(Instruction& inst){};
-static void executeSrl(Instruction& inst){};
-static void executeSrlw(Instruction& inst){};
-static void executeSrli(Instruction& inst){};
-static void executeSrliw(Instruction& inst){};
-static void executeSub(Instruction& inst){};
-static void executeSubw(Instruction& inst){};
-static void executeSw(Instruction& inst){};
-static void executeXor(Instruction& inst){};
-static void executeXori(Instruction& inst){};
-
-// Perform arithmetic/logic operations
-Instruction simArithLogic(Instruction inst) {
+static void executeOr(Instruction& inst){
+    inst.arithResult = inst.op1Val | inst.op2Val;
+};
+static void executeOri(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.arithResult = inst.op1Val | sext_imm12;
+};
+static void executeSb(Instruction& inst){};
+static void executeSd(Instruction& inst){};
+static void executeSh(Instruction& inst){};
+static void executeSll(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b111111;
+    uint64_t shift_result = inst.op1Val << shift_amount;
+    inst.arithResult = shift_result;
+};
+static void executeSllw(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b11111;
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t shift_result = register1 << shift_amount;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
+    (shift_result | 0xFFFFFFFF00000000) : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSlli(Instruction& inst){
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    inst.arithResult = inst.op1Val << imm6;
+};
+static void executeSlliw(Instruction& inst){
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t shift_result = inst.op1Val << imm6;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? shift_result | 0xFFFFFFFFF0000000 : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSlt(Instruction& inst){
+    uint64_t register1 = inst.op1Val ^ 0x8000000000000000;
+    uint64_t register2 = inst.op2Val ^ 0x8000000000000000;
+    inst.arithResult = (register1 < register2) ? 1:0;
+};
+static void executeSlti(Instruction& inst){
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t register1 = inst.op1Val ^ 0x8000000000000000;
+    uint64_t tran_sext_imm12 = sext_imm12 ^ 0x8000000000000000;
+    inst.arithResult = (register1 < tran_sext_imm12) ? 1:0;
+};
+static void executeSltiu(Instruction& inst){
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    inst.arithResult = (inst.op1Val < sext_imm12) ? 1:0;
+};
+static void executeSltu(Instruction& inst){
+    inst.arithResult = (inst.op1Val < inst.op2Val) ? 1 : 0;
+};
+static void executeSra(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b111111;
+    uint64_t sign_bit = (inst.op1Val >> (shift_amount - 1)) << shift_amount;
+    inst.arithResult  = inst.op1Val - sign_bit;
+};
+static void executeSraw(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b11111;
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t sign_bit = (register1 >> (shift_amount - 1)) << shift_amount;
+    uint64_t shift_result = register1 - sign_bit;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
+    (shift_result | 0xFFFFFFFF00000000) : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSrai(Instruction& inst){
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t sign_bit = (inst.op1Val >> (imm6 - 1)) << imm6;
+    inst.arithResult  = inst.op1Val - sign_bit;
+};
+static void executeSraiw(Instruction& inst){
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t sign_bit = (register1 >> (imm6 - 1)) << imm6;
+    uint64_t shift_result = register1 - sign_bit;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
+    (shift_result | 0xFFFFFFFF00000000) : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSrl(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b111111;
+    inst.arithResult = inst.op1Val >> shift_amount;
+};
+static void executeSrlw(Instruction& inst){
+    uint64_t shift_amount = inst.op2Val & 0b11111;
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t shift_result = register1 >> shift_amount;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
+    (shift_result | 0xFFFFFFFF00000000) : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSrli(Instruction& inst){
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t shift_result = inst.op1Val << imm6;
+    inst.arithResult = inst.op1Val >> shift_result;
+};
+static void executeSrliw(Instruction& inst){
+    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t shift_result = register1 >> imm6;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
+    (shift_result | 0xFFFFFFFF00000000) : shift_result;
+    inst.arithResult = sext_shift_result;
+};
+static void executeSub(Instruction& inst){
+    inst.arithResult = inst.op1Val - inst.op2Val;
+};
+static void executeSubw(Instruction& inst){
+    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
+    uint64_t register2 = inst.op2Val & 0xFFFFFFFF;
+    uint64_t result = register1 - register2;
+    uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
+
+    inst.arithResult = sext_result;
+};
+static void executeSw(Instruction& inst){};
+static void executeXor(Instruction& inst){
+    inst.arithResult = inst.op1Val ^ inst.op2Val;
+};
+static void executeXori(Instruction& inst){
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    inst.arithResult = inst.op1Val ^ sext_imm12;
+};
+
+// Perform arithmetic/logic operations
+Instruction simArithLogic(Instruction inst) {
+    
       
     return inst;
 }

@@ -71,7 +71,7 @@ enum FUNCT3 {
     FUNCT3_BNE = 0b001, // bne
     FUNCT3_BLT = 0b100, // blt
     FUNCT3_BGE = 0b101, // bge
-    FUNCT3_BLU = 0b110, // blt
+    FUNCT3_BLU = 0b110, // blu
     FUNCT3_BGU = 0b111, // bgeu
     // For jalr instruction I
     FUNCT3_JAL = 0b000 // jalr
@@ -82,7 +82,7 @@ enum RI_FUNCT7 {
     FUNCT7_ADD = 0b0000000, // add, addw
     FUNCT7_SUB = 0b0100000, // sub, subw
     // for shift instructions
-    FUNCT7_SL = 0b0000000, // sll, slt, srl, srlw, sllw, slli, srli, slliw, srliw,
+    FUNCT7_SL = 0b0000000, // sll, slt, srl, srlw, sllw, slli, srli, slliw, srliw, sltu
     FUNCT7_SA = 0b0100000, // sra, srai, sraiw, sraw
     // for conditional 
     // for logical operations
