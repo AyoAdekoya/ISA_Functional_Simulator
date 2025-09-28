@@ -3,13 +3,15 @@
 ### Group
 
 - [name_1 - netid_1: email_1]
+Ayomide Adekoya - aa9734: aa9734@princeton.edu
 - [name_2 - netid_2: email_2]
+Ryan Githae - rg2080: rg2080@princeton.edu
 
 ## Time Investment
 
 ### Approximately how many hours did it take you to complete this assignment?
 
-- Number of hours: [n hours]
+- Number of hours: [30 hours]
 
 ### How many additional test cases did you write to test your implementation?
 
