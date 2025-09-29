@@ -1069,35 +1069,71 @@ Instruction simAddrGen(Instruction inst) {
 // Perform memory access for load/store instructions
 Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
     switch (inst.opcode) {
-        // ----------------- LOADS -----------------
         case OP_OFFIMM: {
             uint64_t result = 0;
-            if (inst.funct3 = FUNCT3_BYT) {
+            if (inst.funct3 == FUNCT3_BYT) {
                 myMem->getMemValue(inst.arithResult, result, BYTE_SIZE);
                 result = result & 0b11111111;
-                uint64_t sext_result = (result & 80) ? result | 0xFFFFFFFFFFFFFF00 : result;
+                uint64_t sext_result = (result & 0x80) ? result | 0xFFFFFFFFFFFFFF00 : result;
                 inst.arithResult = sext_result;
             }
-            else if(inst.funct3 = FUNCT3_HLW) {
+            else if(inst.funct3 == FUNCT3_HLW) {
                 myMem->getMemValue(inst.arithResult, result, HALF_SIZE);
                 result = result & 0xFFFF;
-                uint64_t sext_result = (result & 80) ? result | 0xFFFFFFFFFFFFFF00 : result;
+                uint64_t sext_result = (result & 0x8000) ? result | 0xFFFFFFFFFFFFFF00 : result;
                 inst.arithResult = sext_result;
             }
-            else if (inst.funct3 = FUNCT3_WRD) {
+            else if (inst.funct3 == FUNCT3_WRD) {
                 myMem->getMemValue(inst.arithResult, result, WORD_SIZE);
                 result = result & 0xFFFFFFFF;
-                uint64_t sext_result = (result & 80) ? result | 0xFFFFFFFFFFFFFF00 : result;
+                uint64_t sext_result = (result & 0x80000000) ? result | 0xFFFFFFFFFFFFFF00 : result;
                 inst.arithResult = sext_result;
             }
-            else if (inst.funct3 == FUNCT3_DBL {
+            else if (inst.funct3 == FUNCT3_DBL) {
                 myMem->getMemValue(inst.arithResult, result, DOUBLE_SIZE);
                 inst.arithResult = result;
-            })
+            }
+            else if (inst.funct3 == FUNCT3_BYU) {
+                myMem-> getMemValue(inst.arithResult, result, BYTE_SIZE);
+                result = result & 0b11111111;
+                uint64_t zext_result = result | 0x0000000000000000;
+                inst.arithResult = result;
+            }
+            else if(inst.funct3 == FUNCT3_HWU) {
+                myMem-> getMemValue(inst.arithResult, result, HALF_SIZE);
+                result = result & 0xFFFF;
+                uint64_t zext_result = result | 0x0000000000000000;
+                inst.arithResult = result;
+            }
+            else if(inst.funct3 ==  FUNCT3_WDU) {
+                myMem-> getMemValue(inst.arithResult, result, WORD_SIZE);
+                result = result & 0xFFFFFFFF;
+                uint64_t zext_result = result | 0x0000000000000000;
+                inst.arithResult = result;
+            }
             break;
         }
         case OP_STRFMT: {
-            
+            uint64_t register2 = 0;
+            if (inst.funct3 == FUNCT3_BYT) {
+                register2 = inst.op2Val & 0b11111111;
+                myMem->setMemValue(inst.memAddress, register2, BYTE_SIZE);
+            }
+            else if (inst.funct3 == FUNCT3_HLW) {
+                register2 = inst.op2Val & 0xFFFF;
+                myMem->setMemValue(inst.memAddress, register2, HALF_SIZE);
+            }
+            else if (inst.funct3 == FUNCT3_WRD) {
+                register2 = inst.op2Val & 0xFFFFFFFF;
+                myMem->setMemValue(inst.memAddress, register2, WORD_SIZE);
+            }
+            else if (inst.funct3 == FUNCT3_DBL) {
+                if (inst.funct3 = FUNCT3_BYT) {
+                register2 = inst.op2Val;
+                myMem->setMemValue(inst.memAddress, register2, DOUBLE_SIZE);
+            }
+            }
+        }  
     }
     return inst;
 }
