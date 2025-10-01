@@ -55,9 +55,6 @@ void dump(MemoryStore *myMem) {
     dumpMemoryState(myMem);
 }
 
-// TODO All functions below (except main) are incomplete.
-// Only ADDI is implemented. Your task is to complete these functions.
-
 // Get raw instruction bits from memory
 Instruction simFetch(uint64_t PC, MemoryStore *myMem) {
     // fetch current instruction
@@ -120,9 +117,12 @@ static void executeSw(Instruction&);
 static void executeXor(Instruction&);
 static void executeXori(Instruction&);
 
+// Create a table for each instruction that pre-fills all the flags
+// and points the instruction to the function that executes it.
 static void InstDecode() {
     InscDecode d;
 
+    // Decoding I type Instructions
     // OP_INTIMM group
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
@@ -154,7 +154,7 @@ static void InstDecode() {
     d.execution = executeXori;
     decodeNon7[OP_INTIMM][FUNCT3_XOR] = d;
 
-    // OP_INTIMM with funct7 (special immediates)
+    // OP_INTIMM with implicit funct7 fields
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
     d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
@@ -222,7 +222,13 @@ static void InstDecode() {
     d.execution = executeLwu;
     decodeNon7[OP_OFFIMM][FUNCT3_WDU] = d;
 
-    // OP_WORIMM (wide int immediate) special immediates
+    // OP_WORIMM (functions using immediates but operating on words)
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAddiw;
+    decodeNon7[OP_WORIMM][FUNCT3_ADD]= d;
+
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
     d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
@@ -248,7 +254,7 @@ static void InstDecode() {
     d.execution = executeJalr;
     decodeNon7[OP_LNKREG][FUNCT3_JAL] = d;
 
-    // R-type 64-bit
+    // R-type instructions
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
     d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
@@ -309,7 +315,7 @@ static void InstDecode() {
     d.execution = executeAnd;
     decode7[OP_REGFMT][FUNCT3_AND][FUNCT7_AND] = d;
 
-    // 32-bit (word) R-type: put word ops under OP_REGWRD
+    // OP_REGWRD 32-bit (word) R-type
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
     d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
@@ -340,7 +346,7 @@ static void InstDecode() {
     d.execution = executeSraw;
     decode7[OP_REGWRD][FUNCT3_SHIFT][FUNCT7_SA] = d; // corrected: sraw
 
-    // Stores
+    // OP_STRFMT: Stores
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = false; d.writesRd = false;
     d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = true;
@@ -365,7 +371,7 @@ static void InstDecode() {
     d.execution = executeSd;
     decodeNon7[OP_STRFMT][FUNCT3_DBL] = d;
 
-    // Branches (note: BLU -> BLTU)
+    // OP_STRBYT (SB Formats) Branches 
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
     d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
@@ -393,7 +399,7 @@ static void InstDecode() {
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
     d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
-    d.execution = executeBltu; // unsigned BLU => BLTU
+    d.execution = executeBltu;
     decodeNon7[OP_STRBYT][FUNCT3_BLU] = d;
 
     d = InscDecode{};
@@ -424,15 +430,18 @@ static void InstDecode() {
 
 // Determine instruction opcode, funct, reg names, and what resources to use
 Instruction simDecode(Instruction inst) {
-    //Boolean to keep track of the special case Immediates
+    //Boolean to keep track of the special case Immediates with implicit funct7s
     bool special_immediate = false;
 
+    // Separate the opcode and store it in the instruction struct
     inst.opcode = inst.instruction & 0b1111111;
 
+    // If the instruction isn't a S or SB type then get the rd address
     if (inst.opcode != OP_STRFMT && inst.opcode != OP_STRBYT) {
         inst.rd = inst.instruction >> 7 & 0b11111;
     }
 
+    // If the instruction isn't a UJ or U type then extract the rs1 and funct3
     if (inst.opcode != OP_ADDIMM &&
         inst.opcode != OP_LDUIMM &&
         inst.opcode != OP_JMPLNK)
@@ -441,6 +450,7 @@ Instruction simDecode(Instruction inst) {
         inst.rs1 = inst.instruction >> 15 & 0b11111;
     }
 
+    // If the instruction is a R, S or SB then extract the rs2 address
     if (inst.opcode == OP_REGFMT ||
         inst.opcode == OP_REGWRD ||
         inst.opcode == OP_STRFMT || 
@@ -449,11 +459,15 @@ Instruction simDecode(Instruction inst) {
         inst.rs2 = inst.instruction >> 20 & 0b11111;
     }
 
+    // If the instruction is an R type get it's funct 7 field
     if (inst.opcode == OP_REGFMT || inst.opcode == OP_REGWRD) 
     {
         inst.funct7 = inst.instruction >> 25 & 0b1111111;
     }
 
+    // If the instruction is a I-type shift with implicit funct 7 bits
+    // extract the bits into the funct7 and set the special_immediate flag
+    // for reuse later
     if ((inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SLL) ||
         (inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SHIFT) ||
         (inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SLL)||
@@ -473,6 +487,8 @@ Instruction simDecode(Instruction inst) {
     }
     //inst.isLegal = true; // assume legal unless proven otherwise
 
+    // If the instruction has a funct 7 field (R type and I type shifts)
+    // then use the decode table for funct 7s
     if (inst.opcode == OP_REGFMT || inst.opcode == OP_REGWRD || special_immediate) 
     {
         InscDecode decode = decode7[inst.opcode][inst.funct3][inst.funct7];
@@ -484,6 +500,7 @@ Instruction simDecode(Instruction inst) {
         inst.readsMem = decode.readsMem;
         inst.writesMem = decode.writesMem;
     }
+    // If the code doesn't have a funct7 field then use the regular decode table
     else{
         InscDecode decode = decodeNon7[inst.opcode][inst.funct3];
         inst.isLegal = decode.isLegal;
@@ -529,6 +546,9 @@ Instruction simNextPCResolution(Instruction inst) {
     return inst;
 }
 
+// IMMGEN
+// Functions that extract and sign extend the immediates for different instructions
+// Generate and Sign extend the Immediates for the SB type instructions
 static uint64_t extractSBImmediates(Instruction& inst) {
     uint64_t imm12 = 0;
     imm12 |= (inst.instruction >> 31 & 0b1) << 12;
@@ -540,6 +560,34 @@ static uint64_t extractSBImmediates(Instruction& inst) {
     
     return sext_imm12;
 }
+
+// Generate and Sign extend the Immediates for the I type instructions
+// without implicit funct7 fields
+static uint64_t extractIImmediates(Instruction& inst, int length = 64) {
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    if (length == 64) {
+        imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    }
+    else if(length == 32) {
+        imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFF000) : imm12;
+    }
+    return imm12;
+}
+
+// Generate and Sign extedn the Immediates for the S-type Instructions
+static uint64_t extractSImmediates(Instruction& inst) {
+    uint64_t imm12 = 0;
+    imm12 |= (inst.instruction >> 7 & 0b11111);
+    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
+
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+
+    return sext_imm12;
+}
+
+// ALU + MB
+// Arithmetic and Logic Block + Memory Block
+// Functions that handle each instruction.
 static void executeAdd(Instruction& inst){
     inst.arithResult = inst.op1Val + inst.op2Val;
 };
@@ -552,16 +600,13 @@ static void executeAddw(Instruction& inst){
     inst.arithResult = sext_result;
 };
 static void executeAddi(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12 = extractIImmediates(inst);
 
     inst.arithResult = inst.op1Val + sext_imm12;
 };
 static void executeAddiw(Instruction& inst){
     uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-
-    uint64_t sext32_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFF000) : imm12;
+    uint32_t sext32_imm12 = extractIImmediates(inst,32);
     uint64_t result = register1 + sext32_imm12;
     uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
 
@@ -571,8 +616,7 @@ static void executeAnd(Instruction& inst){
     inst.arithResult = inst.op1Val & inst.op2Val;
 };
 static void executeAndi(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.arithResult = inst.op1Val & sext_imm12;
 };
@@ -593,7 +637,9 @@ static void executeBeq(Instruction& inst){
 };
 static void executeBge(Instruction& inst){
     uint64_t immediate = extractSBImmediates(inst);
-    if (inst.op1Val >= inst.op2Val) {
+    int64_t rs1 = (int64_t) inst.op1Val;
+    int64_t rs2 = (int64_t) inst.op2Val;
+    if (rs1 >= rs2) {
         inst.nextPC = inst.PC + immediate;
     }
     else {
@@ -611,7 +657,9 @@ static void executeBgeu(Instruction& inst){
 };
 static void executeBlt(Instruction& inst){
     uint64_t immediate = extractSBImmediates(inst);
-    if (inst.op1Val < inst.op2Val) {
+    int64_t rs1 = (int64_t) inst.op1Val;
+    int64_t rs2 = (int64_t) inst.op2Val;
+    if (rs1< rs2) {
         inst.nextPC = inst.PC + immediate;
     }
     else {
@@ -650,39 +698,33 @@ static void executeJal(Instruction& inst){
     
 };
 static void executeJalr(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.arithResult = inst.PC + 4;
     inst.nextPC = (inst.op1Val + sext_imm12) & ~1ULL; //The LSB of the branch address is set to 0 
 };
 static void executeLb(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLbu(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLd(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLh(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLhu(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.memAddress = inst.op1Val + sext_imm12;
 };
@@ -693,46 +735,33 @@ static void executeLui(Instruction& inst){
     inst.arithResult = sext_upper_imm20;
 };
 static void executeLw(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLwu(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeOr(Instruction& inst){
     inst.arithResult = inst.op1Val | inst.op2Val;
 };
 static void executeOri(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
 
     inst.arithResult = inst.op1Val | sext_imm12;
 };
 static void executeSb(Instruction& inst){
-    uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 & 0b11111);
-    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
-
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12 = extractSImmediates(inst);
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeSd(Instruction& inst){
-    uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 & 0b11111);
-    imm12 |= ((inst.instruction >> 25 & 0b1111111) << 5); 
+    uint64_t sext_imm12 = extractSImmediates(inst);
 
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeSh(Instruction& inst){
-    uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 & 0b11111);
-    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
+    uint64_t sext_imm12 = extractSImmediates(inst);
 
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeSll(Instruction& inst){
@@ -765,15 +794,13 @@ static void executeSlt(Instruction& inst){
     inst.arithResult = (register1 < register2) ? 1:0;
 };
 static void executeSlti(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
     uint64_t register1 = inst.op1Val ^ 0x8000000000000000;
     uint64_t tran_sext_imm12 = sext_imm12 ^ 0x8000000000000000;
     inst.arithResult = (register1 < tran_sext_imm12) ? 1:0;
 };
 static void executeSltiu(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
     inst.arithResult = (inst.op1Val < sext_imm12) ? 1:0;
 };
 static void executeSltu(Instruction& inst){
@@ -781,28 +808,28 @@ static void executeSltu(Instruction& inst){
 };
 static void executeSra(Instruction& inst){
     uint64_t shift_amount = inst.op2Val & 0b111111;
-    uint64_t sign_bit = (inst.op1Val >> (shift_amount - 1)) << shift_amount;
-    inst.arithResult  = inst.op1Val - sign_bit;
+    int64_t rs1 = (int64_t) inst.op1Val;
+    int64_t result = rs1 >> shift_amount;
+    inst.arithResult  = (uint64_t) result;
 };
 static void executeSraw(Instruction& inst){
     uint64_t shift_amount = inst.op2Val & 0b11111;
-    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
-    uint64_t sign_bit = (register1 >> (shift_amount - 1)) << shift_amount;
-    uint64_t shift_result = register1 - sign_bit;
+    int32_t register1 = (int32_t) (inst.op1Val & 0xFFFFFFFF);
+    int32_t shift_result = register1 >> shift_amount;
     uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
     (shift_result | 0xFFFFFFFF00000000) : shift_result;
     inst.arithResult = sext_shift_result;
 };
 static void executeSrai(Instruction& inst){
     uint64_t imm6  = inst.instruction >> 20 & 0b111111;
-    uint64_t sign_bit = (inst.op1Val >> (imm6 - 1)) << imm6;
-    inst.arithResult  = inst.op1Val - sign_bit;
+    int64_t rs1 = (int64_t) inst.op1Val;
+    int64_t result = rs1 >> imm6;
+    inst.arithResult  = (uint64_t) result;
 };
 static void executeSraiw(Instruction& inst){
     uint64_t imm6  = inst.instruction >> 20 & 0b111111;
-    uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
-    uint64_t sign_bit = (register1 >> (imm6 - 1)) << imm6;
-    uint64_t shift_result = register1 - sign_bit;
+    int32_t register1 = (int32_t) (inst.op1Val & 0xFFFFFFFF);
+    int32_t shift_result = register1 >> imm6;
     uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
     (shift_result | 0xFFFFFFFF00000000) : shift_result;
     inst.arithResult = sext_shift_result;
@@ -843,19 +870,15 @@ static void executeSubw(Instruction& inst){
     inst.arithResult = sext_result;
 };
 static void executeSw(Instruction& inst){
-    uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 & 0b11111);
-    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
-
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12 = extractSImmediates(inst);
+    
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeXor(Instruction& inst){
     inst.arithResult = inst.op1Val ^ inst.op2Val;
 };
 static void executeXori(Instruction& inst){
-    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    uint64_t sext_imm12  = extractIImmediates(inst);
     inst.arithResult = inst.op1Val ^ sext_imm12;
 };
 
@@ -952,10 +975,8 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
                 myMem->setMemValue(inst.memAddress, register2, WORD_SIZE);
             }
             else if (inst.funct3 == FUNCT3_DBL) {
-            {
                 register2 = inst.op2Val;
                 myMem->setMemValue(inst.memAddress, register2, DOUBLE_SIZE);
-            }
             }
         }  
     }

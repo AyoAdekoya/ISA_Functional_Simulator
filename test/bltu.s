@@ -1,0 +1,9 @@
+_start:
+    li a0, 1
+    li a1, 2
+    bltu a0, a1, 8
+    li a2, 0
+    j 12
+8:
+    li a2, 1
+    .word 0xfeedfeed
