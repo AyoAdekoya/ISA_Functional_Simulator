@@ -70,542 +70,360 @@ Instruction simFetch(uint64_t PC, MemoryStore *myMem) {
     inst.instruction = instruction;
     return inst;
 }
+static void executeAdd(Instruction&);
+static void executeAddw(Instruction&);
+static void executeAddi(Instruction&);
+static void executeAddiw(Instruction&);
+static void executeAnd(Instruction&);
+static void executeAndi(Instruction&);
+static void executeAuipc(Instruction&);
+static void executeBeq(Instruction&);
+static void executeBge(Instruction&);
+static void executeBgeu(Instruction&);
+static void executeBlt(Instruction&);
+static void executeBltu(Instruction&);
+static void executeBne(Instruction&);
+static void executeJal(Instruction&);
+static void executeJalr(Instruction&);
+static void executeLb(Instruction&);
+static void executeLbu(Instruction&);
+static void executeLd(Instruction&);
+static void executeLh(Instruction&);
+static void executeLhu(Instruction&);
+static void executeLui(Instruction&);
+static void executeLw(Instruction&);
+static void executeLwu(Instruction&);
+static void executeOr(Instruction&);
+static void executeOri(Instruction&);
+static void executeSb(Instruction&);
+static void executeSd(Instruction&);
+static void executeSh(Instruction&);
+static void executeSll(Instruction&);
+static void executeSllw(Instruction&);
+static void executeSlli(Instruction&);
+static void executeSlliw(Instruction&);
+static void executeSlt(Instruction&);
+static void executeSlti(Instruction&);
+static void executeSltiu(Instruction&);
+static void executeSltu(Instruction&);
+static void executeSra(Instruction&);
+static void executeSraw(Instruction&);
+static void executeSrai(Instruction&);
+static void executeSraiw(Instruction&);
+static void executeSrl(Instruction&);
+static void executeSrlw(Instruction&);
+static void executeSrli(Instruction&);
+static void executeSrliw(Instruction&);
+static void executeSub(Instruction&);
+static void executeSubw(Instruction&);
+static void executeSw(Instruction&);
+static void executeXor(Instruction&);
+static void executeXori(Instruction&);
 
 static void InstDecode() {
-    decodeNon7[OP_INTIMM][FUNCT3_ADD] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAddi
-    };
+    InscDecode d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_SLL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSlli
-    };
+    // OP_INTIMM group
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAddi;
+    decodeNon7[OP_INTIMM][FUNCT3_ADD] = d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_SET] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSlti
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSlli;
+    decodeNon7[OP_INTIMM][FUNCT3_SLL] = d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_STU] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSltiu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSlti;
+    decodeNon7[OP_INTIMM][FUNCT3_SET] = d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_XOR] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeXori
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSltiu;
+    decodeNon7[OP_INTIMM][FUNCT3_STU] = d;
 
-    decode7[OP_INTIMM][FUNCT3_SHIFT][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSrli
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeXori;
+    decodeNon7[OP_INTIMM][FUNCT3_XOR] = d;
 
-    decode7[OP_INTIMM][FUNCT3_SHIFT][FUNCT7_SA] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSrai
-    };
+    // OP_INTIMM with funct7 (special immediates)
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSrli;
+    decode7[OP_INTIMM][FUNCT3_SHIFT][FUNCT7_SL] = d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_OR] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeOri
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSrai;
+    decode7[OP_INTIMM][FUNCT3_SHIFT][FUNCT7_SA] = d;
 
-    decodeNon7[OP_INTIMM][FUNCT3_AND] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAndi
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeOri;
+    decodeNon7[OP_INTIMM][FUNCT3_OR] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_BYT] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLb
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAndi;
+    decodeNon7[OP_INTIMM][FUNCT3_AND] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_HLW] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLh
-    };
+    // OP_OFFIMM (loads)
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLb;
+    decodeNon7[OP_OFFIMM][FUNCT3_BYT] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_WRD] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLh;
+    decodeNon7[OP_OFFIMM][FUNCT3_HLW] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_DBL] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLd
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLw;
+    decodeNon7[OP_OFFIMM][FUNCT3_WRD] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_BYU] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLbu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLd;
+    decodeNon7[OP_OFFIMM][FUNCT3_DBL] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_HWU] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLhu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLbu;
+    decodeNon7[OP_OFFIMM][FUNCT3_BYU] = d;
 
-    decodeNon7[OP_OFFIMM][FUNCT3_WDU] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = true,
-        .writesMem = false,
-        .execution = executeLwu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLhu;
+    decodeNon7[OP_OFFIMM][FUNCT3_HWU] = d;
 
-    decode7[OP_WORIMM][FUNCT3_SLL][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSlliw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = true; d.writesMem = false;
+    d.execution = executeLwu;
+    decodeNon7[OP_OFFIMM][FUNCT3_WDU] = d;
 
-    decode7[OP_WORIMM][FUNCT3_SHIFT][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSrliw
-    };
+    // OP_WORIMM (wide int immediate) special immediates
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSlliw;
+    decode7[OP_WORIMM][FUNCT3_SLL][FUNCT7_SL] = d;
 
-    decode7[OP_WORIMM][FUNCT3_SHIFT][FUNCT7_SA] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSraiw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSrliw;
+    decode7[OP_WORIMM][FUNCT3_SHIFT][FUNCT7_SL] = d;
 
-    decodeNon7[OP_LNKREG][FUNCT3_JAL] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeJalr
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSraiw;
+    decode7[OP_WORIMM][FUNCT3_SHIFT][FUNCT7_SA] = d;
 
-    decode7[OP_REGFMT][FUNCT3_ADD][FUNCT7_ADD] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAdd
-    };
+    // OP_LNKREG (JALR)
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeJalr;
+    decodeNon7[OP_LNKREG][FUNCT3_JAL] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SUB][FUNCT7_SUB] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSub
-    };
+    // R-type 64-bit
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAdd;
+    decode7[OP_REGFMT][FUNCT3_ADD][FUNCT7_ADD] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SLL][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSll
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSub;
+    decode7[OP_REGFMT][FUNCT3_SUB][FUNCT7_SUB] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SET][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSlt
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSll;
+    decode7[OP_REGFMT][FUNCT3_SLL][FUNCT7_SL] = d;
 
-    decode7[OP_REGFMT][FUNCT3_STU][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSltu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSlt;
+    decode7[OP_REGFMT][FUNCT3_SET][FUNCT7_SL] = d;
 
-    decode7[OP_REGFMT][FUNCT3_XOR][FUNCT7_XOR] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeXor
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSltu;
+    decode7[OP_REGFMT][FUNCT3_STU][FUNCT7_SL] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSrl
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeXor;
+    decode7[OP_REGFMT][FUNCT3_XOR][FUNCT7_XOR] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SA] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSra
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSrl;
+    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SL] = d;
 
-    decode7[OP_REGFMT][FUNCT3_OR][FUNCT7_OR] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeOr
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSra;
+    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SA] = d;
 
-    decode7[OP_REGFMT][FUNCT3_AND][FUNCT7_AND] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAnd
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeOr;
+    decode7[OP_REGFMT][FUNCT3_OR][FUNCT7_OR] = d;
 
-    decode7[OP_REGWRD][FUNCT3_ADD][FUNCT7_ADD] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAddw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAnd;
+    decode7[OP_REGFMT][FUNCT3_AND][FUNCT7_AND] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SUB][FUNCT7_SUB] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSubw
-    };
+    // 32-bit (word) R-type: put word ops under OP_REGWRD
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAddw;
+    decode7[OP_REGWRD][FUNCT3_ADD][FUNCT7_ADD] = d;
 
-    decode7[OP_REGFMT][FUNCT3_SLL][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSllw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSubw;
+    decode7[OP_REGWRD][FUNCT3_SUB][FUNCT7_SUB] = d; // corrected: word sub under OP_REGWRD
 
-    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SL] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSrlw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSllw;
+    decode7[OP_REGWRD][FUNCT3_SLL][FUNCT7_SL] = d; // corrected: sllw under OP_REGWRD
 
-    decode7[OP_REGFMT][FUNCT3_SHIFT][FUNCT7_SA] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = true,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeSraw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSrlw;
+    decode7[OP_REGWRD][FUNCT3_SHIFT][FUNCT7_SL] = d; // corrected: srlw
 
-    decodeNon7[OP_STRFMT][FUNCT3_BYT] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = true,
-        .execution = executeSb
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeSraw;
+    decode7[OP_REGWRD][FUNCT3_SHIFT][FUNCT7_SA] = d; // corrected: sraw
 
-    decodeNon7[OP_STRFMT][FUNCT3_HLW] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = true,
-        .execution = executeSh
-    };
+    // Stores
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = true;
+    d.execution = executeSb;
+    decodeNon7[OP_STRFMT][FUNCT3_BYT] = d;
 
-    decodeNon7[OP_STRFMT][FUNCT3_WRD] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = true,
-        .execution = executeSw
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = true;
+    d.execution = executeSh;
+    decodeNon7[OP_STRFMT][FUNCT3_HLW] = d;
 
-    decodeNon7[OP_STRFMT][FUNCT3_DBL] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = true,
-        .execution = executeSd
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = true;
+    d.execution = executeSw;
+    decodeNon7[OP_STRFMT][FUNCT3_WRD] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BEQ] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBeq
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = true;
+    d.execution = executeSd;
+    decodeNon7[OP_STRFMT][FUNCT3_DBL] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BNE] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBne
-    };
+    // Branches (note: BLU -> BLTU)
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBeq;
+    decodeNon7[OP_STRBYT][FUNCT3_BEQ] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BLT] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBlt
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBne;
+    decodeNon7[OP_STRBYT][FUNCT3_BNE] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BGE] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBge
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBlt;
+    decodeNon7[OP_STRBYT][FUNCT3_BLT] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BLU] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBlt
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBge;
+    decodeNon7[OP_STRBYT][FUNCT3_BGE] = d;
 
-    decodeNon7[OP_STRBYT][FUNCT3_BGU] = {
-        .isLegal = true,
-        .doesArithLogic = true,
-        .writesRd = false,
-        .readsRs1 = true,
-        .readsRs2 = true,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeBgeu
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBltu; // unsigned BLU => BLTU
+    decodeNon7[OP_STRBYT][FUNCT3_BLU] = d;
 
-    decodeNon7[OP_ADDIMM][0] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = false,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeAuipc
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = true; d.writesRd = false;
+    d.readsRs1 = true; d.readsRs2 = true; d.readsMem = false; d.writesMem = false;
+    d.execution = executeBgeu;
+    decodeNon7[OP_STRBYT][FUNCT3_BGU] = d;
 
-    decodeNon7[OP_LDUIMM][0] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = false,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeLui
-    };
+    // AUIPC, LUI, JAL
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = false; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeAuipc;
+    decodeNon7[OP_ADDIMM][0] = d;
 
-    decodeNon7[OP_JMPLNK][0] = {
-        .isLegal = true,
-        .doesArithLogic = false,
-        .writesRd = true,
-        .readsRs1 = false,
-        .readsRs2 = false,
-        .readsMem = false,
-        .writesMem = false,
-        .execution = executeJal
-    };
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = false; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeLui;
+    decodeNon7[OP_LDUIMM][0] = d;
+
+    d = InscDecode{};
+    d.isLegal = true; d.doesArithLogic = false; d.writesRd = true;
+    d.readsRs1 = false; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
+    d.execution = executeJal;
+    decodeNon7[OP_JMPLNK][0] = d;
 }
 
 // Determine instruction opcode, funct, reg names, and what resources to use
 Instruction simDecode(Instruction inst) {
-    // Fill in the decode table ahead of time
-    InstDecode();
-
     //Boolean to keep track of the special case Immediates
     bool special_immediate = false;
 
@@ -638,10 +456,10 @@ Instruction simDecode(Instruction inst) {
 
     if ((inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SLL) ||
         (inst.opcode == OP_INTIMM && inst.funct3 == FUNCT3_SHIFT) ||
-         inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SLL ||
-         inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SHIFT) {
+        (inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SLL)||
+        (inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SHIFT)){
             special_immediate = true;
-            inst.funct7 = inst.instruction >> 26 & 0b111111;
+            inst.funct7 = inst.instruction >> 25 & 0b111111;
     }
     
 
@@ -742,7 +560,9 @@ static void executeAddi(Instruction& inst){
 static void executeAddiw(Instruction& inst){
     uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
-    uint64_t result = register1 + imm12;
+
+    uint64_t sext32_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFF000) : imm12;
+    uint64_t result = register1 + sext32_imm12;
     uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
 
     inst.arithResult = sext_result;
@@ -823,7 +643,7 @@ static void executeJal(Instruction& inst){
     imm20 |= (inst.instruction >> 21 & 0b1111111111) << 1;
     imm20 |= (inst.instruction >> 31 & 0b1) << 20;
 
-    uint64_t sext_imm20 = (imm20 & 100000) ? imm20 | 0xFFE00000 : imm20;
+    uint64_t sext_imm20 = (imm20 & 0x100000) ? imm20 | 0xFFFFFFFFFFE00000 : imm20;
 
     inst.arithResult = inst.PC + 4;
     inst.nextPC = inst.PC + sext_imm20;
@@ -840,31 +660,31 @@ static void executeLb(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLbu(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLd(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLh(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLhu(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
 
-    inst.arithResult = inst.op1Val + sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLui(Instruction& inst){
     uint64_t imm20 = (inst.instruction >> 12) & 0b11111111111111111111;
@@ -875,12 +695,12 @@ static void executeLui(Instruction& inst){
 static void executeLw(Instruction& inst){
     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
-    inst.arithResult = sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeLwu(Instruction& inst){
-     uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
+    uint64_t imm12  = inst.instruction >> 20 & 0b111111111111;
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
-    inst.arithResult = sext_imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeOr(Instruction& inst){
     inst.arithResult = inst.op1Val | inst.op2Val;
@@ -893,24 +713,24 @@ static void executeOri(Instruction& inst){
 };
 static void executeSb(Instruction& inst){
     uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 && 0b11111);
-    imm12 |= (inst.instruction >> 25 && 0b1111111);
+    imm12 |= (inst.instruction >> 7 & 0b11111);
+    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
 
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeSd(Instruction& inst){
     uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 && 0b11111);
-    imm12 |= (inst.instruction >> 25 && 0b1111111);
+    imm12 |= (inst.instruction >> 7 & 0b11111);
+    imm12 |= ((inst.instruction >> 25 & 0b1111111) << 5); 
 
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
     inst.memAddress = inst.op1Val + sext_imm12;
 };
 static void executeSh(Instruction& inst){
     uint64_t imm12 = 0;
-    imm12 |= (inst.instruction >> 7 && 0b11111);
-    imm12 |= (inst.instruction >> 25 && 0b1111111);
+    imm12 |= (inst.instruction >> 7 & 0b11111);
+    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
 
     uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
     inst.memAddress = inst.op1Val + sext_imm12;
@@ -935,8 +755,8 @@ static void executeSlli(Instruction& inst){
 static void executeSlliw(Instruction& inst){
     uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
     uint64_t imm6  = inst.instruction >> 20 & 0b111111;
-    uint64_t shift_result = inst.op1Val << imm6;
-    uint64_t sext_shift_result = (shift_result & 0x80000000) ? shift_result | 0xFFFFFFFFF0000000 : shift_result;
+    uint64_t shift_result = register1 << imm6;
+    uint64_t sext_shift_result = (shift_result & 0x80000000) ? shift_result | 0xFFFFFFFF00000000 : shift_result;
     inst.arithResult = sext_shift_result;
 };
 static void executeSlt(Instruction& inst){
@@ -1022,7 +842,14 @@ static void executeSubw(Instruction& inst){
 
     inst.arithResult = sext_result;
 };
-static void executeSw(Instruction& inst){};
+static void executeSw(Instruction& inst){
+    uint64_t imm12 = 0;
+    imm12 |= (inst.instruction >> 7 & 0b11111);
+    imm12 |= (inst.instruction >> 25 & 0b1111111) << 5;
+
+    uint64_t sext_imm12 = (imm12 & 0x800) ? (imm12 | 0xFFFFFFFFFFFFF000) : imm12;
+    inst.memAddress = inst.op1Val + sext_imm12;
+};
 static void executeXor(Instruction& inst){
     inst.arithResult = inst.op1Val ^ inst.op2Val;
 };
@@ -1072,43 +899,40 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
         case OP_OFFIMM: {
             uint64_t result = 0;
             if (inst.funct3 == FUNCT3_BYT) {
-                myMem->getMemValue(inst.arithResult, result, BYTE_SIZE);
+                myMem->getMemValue(inst.memAddress, result, BYTE_SIZE);
                 result = result & 0b11111111;
                 uint64_t sext_result = (result & 0x80) ? result | 0xFFFFFFFFFFFFFF00 : result;
                 inst.arithResult = sext_result;
             }
             else if(inst.funct3 == FUNCT3_HLW) {
-                myMem->getMemValue(inst.arithResult, result, HALF_SIZE);
+                myMem->getMemValue(inst.memAddress, result, HALF_SIZE);
                 result = result & 0xFFFF;
-                uint64_t sext_result = (result & 0x8000) ? result | 0xFFFFFFFFFFFFFF00 : result;
+                uint64_t sext_result = (result & 0x8000) ? result | 0xFFFFFFFFFFFF0000 : result;
                 inst.arithResult = sext_result;
             }
             else if (inst.funct3 == FUNCT3_WRD) {
-                myMem->getMemValue(inst.arithResult, result, WORD_SIZE);
+                myMem->getMemValue(inst.memAddress, result, WORD_SIZE);
                 result = result & 0xFFFFFFFF;
-                uint64_t sext_result = (result & 0x80000000) ? result | 0xFFFFFFFFFFFFFF00 : result;
+                uint64_t sext_result = (result & 0x80000000) ? result | 0xFFFFFFFF00000000 : result;
                 inst.arithResult = sext_result;
             }
             else if (inst.funct3 == FUNCT3_DBL) {
-                myMem->getMemValue(inst.arithResult, result, DOUBLE_SIZE);
+                myMem->getMemValue(inst.memAddress, result, DOUBLE_SIZE);
                 inst.arithResult = result;
             }
             else if (inst.funct3 == FUNCT3_BYU) {
-                myMem-> getMemValue(inst.arithResult, result, BYTE_SIZE);
+                myMem-> getMemValue(inst.memAddress, result, BYTE_SIZE);
                 result = result & 0b11111111;
-                uint64_t zext_result = result | 0x0000000000000000;
                 inst.arithResult = result;
             }
             else if(inst.funct3 == FUNCT3_HWU) {
-                myMem-> getMemValue(inst.arithResult, result, HALF_SIZE);
+                myMem-> getMemValue(inst.memAddress, result, HALF_SIZE);
                 result = result & 0xFFFF;
-                uint64_t zext_result = result | 0x0000000000000000;
                 inst.arithResult = result;
             }
             else if(inst.funct3 ==  FUNCT3_WDU) {
-                myMem-> getMemValue(inst.arithResult, result, WORD_SIZE);
+                myMem-> getMemValue(inst.memAddress, result, WORD_SIZE);
                 result = result & 0xFFFFFFFF;
-                uint64_t zext_result = result | 0x0000000000000000;
                 inst.arithResult = result;
             }
             break;
@@ -1128,7 +952,7 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
                 myMem->setMemValue(inst.memAddress, register2, WORD_SIZE);
             }
             else if (inst.funct3 == FUNCT3_DBL) {
-                if (inst.funct3 = FUNCT3_BYT) {
+            {
                 register2 = inst.op2Val;
                 myMem->setMemValue(inst.memAddress, register2, DOUBLE_SIZE);
             }
@@ -1142,7 +966,7 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
 Instruction simCommit(Instruction inst, REGS &regData) {
 
     // regData here is passed by reference, so changes will be reflected in original
-    if (inst.opcode != OP_STRFMT && inst.opcode != OP_STRBYT) {
+    if (inst.writesRd && inst.rd != 0) {
         regData.registers[inst.rd] = inst.arithResult;
     }
     return inst;
@@ -1164,6 +988,8 @@ Instruction simInstruction(uint64_t &PC, MemoryStore *myMem, REGS &regData) {
 }
 
 int main(int argc, char** argv) {
+    // Fill in the decode table ahead of time
+    InstDecode();
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <instruction_file>\n", argv[0]);
