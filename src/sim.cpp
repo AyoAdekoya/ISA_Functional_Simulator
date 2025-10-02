@@ -473,7 +473,7 @@ Instruction simDecode(Instruction inst) {
         (inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SLL)||
         (inst.opcode == OP_WORIMM && inst.funct3 == FUNCT3_SHIFT)){
             special_immediate = true;
-            inst.funct7 = inst.instruction >> 25 & 0b111111;
+            inst.funct7 = inst.instruction >> 25 & 0b1111111;
     }
     
 
@@ -1039,6 +1039,14 @@ int main(int argc, char** argv) {
         }
         if (!inst.isLegal) {
             fprintf(stderr, "Illegal instruction encountered at PC: 0x%lx\n", inst.PC);
+            fprintf(stderr, "Illegal at PC=0x%lx: opcode=0x%02x funct3=0x%x funct7=0x%02x\n",
+            inst.PC, (unsigned)inst.opcode, (unsigned)inst.funct3, (unsigned)((inst.instruction >> 25) & 0x7F));
+            fprintf(stderr, "instr32=0x%08x  bytes=[%02x %02x %02x %02x]\n",
+            (unsigned)(inst.instruction & 0xFFFFFFFF),
+            (unsigned)(inst.instruction & 0xFF),
+            (unsigned)((inst.instruction >> 8) & 0xFF),
+            (unsigned)((inst.instruction >> 16) & 0xFF),
+            (unsigned)((inst.instruction >> 24) & 0xFF));
             err = true;
         }
     }
