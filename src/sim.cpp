@@ -134,7 +134,7 @@ static void InstDecode() {
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
     d.readsRs1 = true; d.readsRs2 = false; d.readsMem = false; d.writesMem = false;
     d.execution = executeSlli;
-    decodeNon7[OP_INTIMM][FUNCT3_SLL] = d;
+    decode7[OP_INTIMM][FUNCT3_SLL][FUNCT7_SL] = d;
 
     d = InscDecode{};
     d.isLegal = true; d.doesArithLogic = true; d.writesRd = true;
