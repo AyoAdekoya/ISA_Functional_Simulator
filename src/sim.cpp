@@ -603,7 +603,7 @@ static void executeAddw(Instruction& inst){
     uint32_t register1 = inst.op1Val & 0xFFFFFFFF;
     uint32_t register2 = inst.op2Val & 0xFFFFFFFF;
     uint32_t result = register1 + register2;
-    uint64_t sext_result = (result & 0x8000) ? (result | 0xFFFFFFFF00000000) : result;
+    uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
 
     inst.arithResult = sext_result;
 };
@@ -616,7 +616,7 @@ static void executeAddiw(Instruction& inst){
     uint32_t register1 = inst.op1Val & 0xFFFFFFFF;
     uint32_t sext32_imm12 = extractIImmediates(inst,32);
     uint32_t result = register1 + sext32_imm12;
-    uint64_t sext_result = (result & 0x8000) ? (result | 0xFFFFFFFF00000000) : result;
+    uint64_t sext_result = (result & 0x80000000) ? (result | 0xFFFFFFFF00000000) : result;
 
     inst.arithResult = sext_result;
 };
