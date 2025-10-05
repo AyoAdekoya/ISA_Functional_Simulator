@@ -1,7 +1,7 @@
 _start:
-    jal a2, 8
-    li a2, 0
+    jal a2, end
+    li a1, 3
     j 12
-8:
-    li a3, 0
+end:
+    li a3, 2
     .word 0xfeedfeed

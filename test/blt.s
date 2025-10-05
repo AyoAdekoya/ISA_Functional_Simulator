@@ -1,9 +1,26 @@
-_start:
-    li a0, -2
-    li a1, 1
-    blt a0, a1, 8
-    li a2, 0
-    j 12
-8:
-    li a2, 1
+# t5 should be 14 or 0xE at the end of this code.
+start:
+    addi t0, zero, 0
+    addi t1, zero, 1
+    addi t2, zero, -1
+    addi t5, zero, 0   
+    blt t0, t1, branch1
+    addi t5, t5, 16
+branch1:
+    blt t0, t2, branch2
+    addi t5, t5, 8    
+branch2:
+    addi t0, zero, 0
+    addi t1, zero, -1
+    blt t0, t1, branch3
+    addi t5, t5, 4
+branch3:
+    addi t0, zero, 4
+    addi t1, zero, 4
+    blt t0, t1, branch4
+    addi t5, t5, 2
+branch4:
+
     .word 0xfeedfeed
+
+# Thank you Cecily Gross

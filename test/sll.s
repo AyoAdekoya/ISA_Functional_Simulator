@@ -1,5 +1,5 @@
 _start:
     li a0, 1
-    li a1, 6
+    li a1, 32
     sll a2, a0, a1
     .word 0xfeedfeed

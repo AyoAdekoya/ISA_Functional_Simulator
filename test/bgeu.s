@@ -1,9 +1,11 @@
 _start:
-    li a0, 3
-    li a1, 2
-    bgeu a0, a1, 8
+    li a0, 1
+    li a1, -1
+    bgeu a0, a1, branch
     li a2, 0
-    j 12
-8:
+    j end
+branch:
     li a2, 1
+
+end:
     .word 0xfeedfeed

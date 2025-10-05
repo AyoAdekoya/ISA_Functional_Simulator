@@ -1,4 +1,4 @@
 _start:
-    li a0, 1
-    sltiu a2, a0, 2
+    li a0, 0xFFFE
+    sltiu a1, a0, 2047
     .word 0xfeedfeed

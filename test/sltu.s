@@ -1,5 +1,5 @@
 _start:
-    li a0, 1
-    li a1, 2
+    li a0, 0x100000000000fffe
+    li a1, 0xffff
     sltu a2, a0, a1
     .word 0xfeedfeed
