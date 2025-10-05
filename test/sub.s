@@ -1,5 +1,7 @@
 _start:
-    li a0, 10
-    li a1, 4
-    sub a2, a0, a1
+    li a0, 6
+    li a1, 7
+    li a2, 10
+    sub a3, a0, a1
+    sub a4, a2, a0
     .word 0xfeedfeed
