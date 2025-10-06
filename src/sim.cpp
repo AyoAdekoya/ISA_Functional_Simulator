@@ -306,8 +306,8 @@ static void executeSlli(Instruction& inst){
 };
 static void executeSlliw(Instruction& inst){
     uint32_t register1 = inst.op1Val & 0xFFFFFFFF;
-    uint32_t imm6  = inst.instruction >> 20 & 0b111111;
-    uint32_t shift_result = register1 << imm6;
+    uint32_t imm5  = inst.instruction >> 20 & 0b11111;
+    uint32_t shift_result = register1 << imm5;
     uint64_t sext_shift_result = (shift_result & 0x80000000) ? shift_result | 0xFFFFFFFF00000000 : shift_result;
     inst.arithResult = sext_shift_result;
 };
@@ -350,9 +350,9 @@ static void executeSrai(Instruction& inst){
     inst.arithResult  = (uint64_t) result;
 };
 static void executeSraiw(Instruction& inst){
-    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t imm5  = inst.instruction >> 20 & 0b11111;
     int32_t register1 = (int32_t) (inst.op1Val & 0xFFFFFFFF);
-    int32_t shift_result = register1 >> imm6;
+    int32_t shift_result = register1 >> imm5;
     uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
     (shift_result | 0xFFFFFFFF00000000) : shift_result;
     inst.arithResult = sext_shift_result;
@@ -374,9 +374,9 @@ static void executeSrli(Instruction& inst){
     inst.arithResult = inst.op1Val >> imm6;
 };
 static void executeSrliw(Instruction& inst){
-    uint64_t imm6  = inst.instruction >> 20 & 0b111111;
+    uint64_t imm5  = inst.instruction >> 20 & 0b11111;
     uint64_t register1 = inst.op1Val & 0xFFFFFFFF;
-    uint64_t shift_result = register1 >> imm6;
+    uint64_t shift_result = register1 >> imm5;
     uint64_t sext_shift_result = (shift_result & 0x80000000) ? 
     (shift_result | 0xFFFFFFFF00000000) : shift_result;
     inst.arithResult = sext_shift_result;
