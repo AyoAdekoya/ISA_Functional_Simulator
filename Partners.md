@@ -3,29 +3,31 @@
 ### Group
 
 - [name_1 - netid_1: email_1]
-Ayomide Adekoya - aa9734: aa9734@princeton.edu
+Ayomide Adekoya - aa9734:aa9734@princeton.edu
 - [name_2 - netid_2: email_2]
 Ryan Githae - rg2080: rg2080@princeton.edu
 
 ## Time Investment
-
 ### Approximately how many hours did it take you to complete this assignment?
 
 - Number of hours: [30 hours]
 
 ### How many additional test cases did you write to test your implementation?
 
-- Number of test cases: [n tests]
+- Number of test cases: [47 tests]
 
 ### If you used other people's test cases, acknowledge the authors below.
 
-- [Test authors or N/A]
+- [Test authors]
+load_store.s thanks to Lucy Wang
+sets.s thanks to Alexei Korolev
+shift.s thanks to Yusuf Abdelnur
 
 ## Challenges Encountered
 
 ### Did you encounter any serious problems? If yes, please describe (e.g spec was unclear).
 
-- [Yes/No]
+- [Yes/No] No
 - [If yes, please describe the problems encountered]
 
 ## Additional Comments
