@@ -780,6 +780,7 @@ Instruction simDecode(Instruction inst) {
 
     if (inst.instruction == 0x00000013) {
         inst.isNop = true;
+        inst.isLegal = true;
         return inst; // NOP instruction
     }
     //inst.isLegal = true; // assume legal unless proven otherwise
@@ -946,6 +947,7 @@ Instruction simMemAccess(Instruction inst, MemoryStore *myMem) {
 // Write back results to registers
 Instruction simCommit(Instruction inst, REGS &regData) {
 
+    regData.registers[0] = 0;
     // regData here is passed by reference, so changes will be reflected in original
     if (inst.writesRd && inst.rd != 0) {
         regData.registers[inst.rd] = inst.arithResult;
