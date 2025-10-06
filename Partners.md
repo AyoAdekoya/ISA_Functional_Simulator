@@ -22,6 +22,8 @@ Ryan Githae - rg2080: rg2080@princeton.edu
 load_store.s thanks to Lucy Wang
 sets.s thanks to Alexei Korolev
 shift.s thanks to Yusuf Abdelnur
+word.s thanks to Audrey Zeng
+jal_test.s thanks to Youssef Ali
 
 ## Challenges Encountered
 
@@ -46,6 +48,7 @@ shift.s thanks to Yusuf Abdelnur
 - Write "N/A" if you did not use generative AI for any help during this project.
 
 - [describe how you used generate AI or N/A]
+We used AI (ChatGPT)to understand the requirements of the project and how our knowledge of C translates to C++. We also used it to understand what is an ELF file and bin and how to use it, the structure of the Memory and registers and how the programs interface with them and how the header file helps in the decoding and exectuion of the instructions. We used various prompts the link can be found here:https://chatgpt.com/share/68e31c1f-1c98-800b-b767-702a8b5163d6
 
 ## Acknowledgement of Original Work
 
@@ -58,4 +61,7 @@ shift.s thanks to Yusuf Abdelnur
 >> This programming assignment represents my own work in accordance with University regulations and the course syllabus.  /s/ Ada Lovelace
 
 - [Acknowledgement of student 1]
+This programming assignment represents my own work in accordance with University regulations and the course syllabus.  /s/ Ayomide Adekoya
+
 - [Acknowledgement of student 2]
+This programming assignment represents my own work in accordance with University regulations and the course syllabus.  /s/ Ryan Githae
